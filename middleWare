@@ -64,6 +64,53 @@ You can build and run a Docker container with this Dockerfile using the followin
 docker build -t huggingface_cuda .
 docker run --gpus all -it huggingface_cuda
 ```
-
 "Please note that you need to have the NVIDIA Container Toolkit installed to use the --gpus all option with Docker. This Dockerfile and commands are a basic example and might need to be adjusted based on your specific needs. Always review and understand code before running it."
+
+
+
+----------------------------------------------------------------------
+GPT4.0 -> "while using a formal specification,  create a python script that is compatible with hugging face on a cuda core using docker"
+
+"Sure, I can help you create a Python script that uses the Hugging Face Transformers library on a CUDA core. Here’s a basic example:"
+
+Python:
+```
+# import necessary libraries
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+
+# specify the model
+model_name = "distilbert-base-uncased-finetuned-sst-2-english"
+
+# check if CUDA is available and set the device accordingly
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# load the model and tokenizer and move the model to the device
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
+
+# define a function to classify sentiment
+def classify_sentiment(text):
+    inputs = tokenizer(text, return_tensors="pt").to(device)
+    outputs = model(**inputs)
+    _, preds = torch.max(outputs.logits, dim=1)
+    return "Positive" if preds[0].item() == 1 else "Negative"
+
+# test the function
+print(classify_sentiment("I love this!"))
+'''
+
+"This script does the following:
+Imports the necessary libraries.
+Specifies the model to use.
+Checks if CUDA is available and sets the device accordingly.
+Loads the model and tokenizer and moves the model to the device.
+Defines a function to classify sentiment.
+Tests the function with a sample sentence.
+Please note that you need to have the Hugging Face Transformers library 
+installed and a CUDA-compatible GPU available to run this script. This script 
+is a basic example and might need to be adjusted based on your specific needs.
+Always review and understand code before running it."
+
+
 
