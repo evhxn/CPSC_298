@@ -1,0 +1,69 @@
+//GPT4.0 -> "do a formal spec in python, and create a hugging face compatible on a cuda core using docker"
+
+Python:
+```
+# Dockerfile
+FROM nvidia/cuda:11.1-base-ubuntu20.04
+
+# Install some basic utilities
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    sudo \
+    git \
+    bzip2 \
+    libx11-6 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Create a working directory
+RUN mkdir /app
+WORKDIR /app
+
+# Create a non-root user and switch to it
+RUN adduser --disabled-password --gecos '' --shell /bin/bash user \
+ && chown -R user:user /app
+RUN echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-user
+USER user
+
+# Install Miniconda
+RUN curl -so ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+ && chmod +x ~/miniconda.sh \
+ && ~/miniconda.sh -b -p ~/miniconda \
+ && rm ~/miniconda.sh
+ENV PATH=/home/user/miniconda/bin:$PATH
+ENV CONDA_AUTO_UPDATE_CONDA=false
+
+# Create a Python 3.8 environment
+RUN /home/user/miniconda/bin/conda install conda-build \
+ && /home/user/miniconda/bin/conda create -y --name py38 python=3.8.5 \
+ && /home/user/miniconda/bin/conda clean -ya
+ENV CONDA_DEFAULT_ENV=py38
+ENV CONDA_PREFIX=/home/user/miniconda/envs/$CONDA_DEFAULT_ENV
+ENV PATH=$CONDA_PREFIX/bin:$PATH
+
+# Install PyTorch and Transformers
+RUN conda install -y -c pytorch pytorch torchvision torchaudio cudatoolkit=11.1 \
+ && conda clean -ya
+RUN pip install transformers
+
+# Set the default command to python3
+CMD ["python3"]
+
+```
+
+"Dockerfile does the following:
+
+Starts from a CUDA 11.1 base image.
+Installs some basic utilities.
+Creates a non-root user for safety.
+Installs Miniconda and creates a Python 3.8 environment.
+Installs PyTorch and Hugging Face’s Transformers library.
+You can build and run a Docker container with this Dockerfile using the following commands:"
+
+```
+docker build -t huggingface_cuda .
+docker run --gpus all -it huggingface_cuda
+```
+
+"Please note that you need to have the NVIDIA Container Toolkit installed to use the --gpus all option with Docker. This Dockerfile and commands are a basic example and might need to be adjusted based on your specific needs. Always review and understand code before running it."
+
